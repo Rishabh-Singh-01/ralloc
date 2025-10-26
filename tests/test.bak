@@ -1,0 +1,121 @@
+#include <assert.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <time.h>
+
+#include "../core/ralloc.c"
+#include "../utils/stack.c"
+
+int generateRandomNum(int s, int n) { return s + (rand() % n); }
+
+int main() {
+  Stack testStack;
+  initStack(&testStack);
+
+  srand(time(NULL));
+  initialize();
+
+  int cycles = generateRandomNum(1, 100);
+  int numOccupy = generateRandomNum(1, 100);
+  int numFree = generateRandomNum(1, numOccupy);
+  int prevNumOccupy = numOccupy;
+  int prevNumFree = prevNumFree;
+
+  int *rallocPtrListPtr[1000000];
+  int expectedValueListPtr[1000000];
+
+  int cycleItr = cycles;
+  while (cycleItr > 0) {
+    if (cycleItr == cycles) {
+      // Running the alloc cycle
+      int tempOccupy = 0;
+      while (tempOccupy < numOccupy) {
+        void *testPtr = rallocate(sizeof(int));
+        LOG_INFO("Testing Ptr: %p", testPtr);
+        rallocPtrListPtr[tempOccupy] = testPtr;
+        int num = generateRandomNum(1, 100);
+        expectedValueListPtr[tempOccupy] = num;
+        *(rallocPtrListPtr[tempOccupy]) = num;
+        tempOccupy++;
+      }
+
+      // Running the free cycle
+      tempOccupy = 0;
+      while (tempOccupy < numFree) {
+        int num = generateRandomNum(0, numOccupy);
+        LOG_DEBUG("This is the free num: '%d'", num);
+        LOG_DEBUG("This is the free ptr: '%p'", rallocPtrListPtr[num]);
+        expectedValueListPtr[num] = -1;
+        ralloc_free(rallocPtrListPtr[num]);
+        push(&testStack, num);
+        tempOccupy++;
+      }
+
+      // Running the assertions
+      tempOccupy = 0;
+      while (tempOccupy < numOccupy) {
+        assert(expectedValueListPtr[tempOccupy] ==
+                   *(rallocPtrListPtr[tempOccupy]) &&
+               "Unexpected Value Mismatch");
+        LOG_INFO("Test Passed: Expected '%d', Actual '%d'",
+                 expectedValueListPtr[tempOccupy],
+                 *(rallocPtrListPtr[tempOccupy]));
+        LOG_INFO("Test Passed: Pointer '%p'", (rallocPtrListPtr[tempOccupy]));
+        tempOccupy++;
+      }
+    } else {
+      int tempOccupy = 0;
+      int tempPrevNumOccupy = prevNumOccupy;
+
+      while (tempOccupy < numOccupy) {
+        int *testPtr = rallocate(sizeof(int));
+        int num = generateRandomNum(1, 100);
+
+        if (!isEmpty(&testStack)) {
+          int lastPushed = pop(&testStack);
+          expectedValueListPtr[lastPushed] = num;
+          rallocPtrListPtr[lastPushed] = testPtr;
+          *(rallocPtrListPtr[lastPushed]) = num;
+        } else {
+          rallocPtrListPtr[tempPrevNumOccupy] = testPtr;
+          expectedValueListPtr[tempPrevNumOccupy] = num;
+          *(rallocPtrListPtr[tempPrevNumOccupy]) = num;
+          tempPrevNumOccupy++;
+        }
+        tempOccupy++;
+      }
+
+      // Running the free cycle
+      tempOccupy = 0;
+      while (tempOccupy < numFree) {
+        int num = generateRandomNum(0, tempPrevNumOccupy);
+        expectedValueListPtr[num] = -1;
+        ralloc_free(rallocPtrListPtr[num]);
+        push(&testStack, num);
+        tempOccupy++;
+      }
+
+      // Running the assertions
+      tempOccupy = 0;
+      while (tempOccupy < tempPrevNumOccupy) {
+        assert(expectedValueListPtr[tempOccupy] ==
+                   *(rallocPtrListPtr[tempOccupy]) &&
+               "Unexpected Value Mismatch");
+        LOG_INFO("Test Passed: Expected '%d', Actual '%d'",
+                 expectedValueListPtr[tempOccupy],
+                 *(rallocPtrListPtr[tempOccupy]));
+        LOG_INFO("Test Passed: Pointer '%p'", (rallocPtrListPtr[tempOccupy]));
+        tempOccupy++;
+      }
+    }
+
+    prevNumOccupy = numOccupy;
+    prevNumFree = prevNumFree;
+    numOccupy = generateRandomNum(1, 100);
+    numFree = generateRandomNum(1, numOccupy);
+    cycleItr--;
+  }
+  return 0;
+}
