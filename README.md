@@ -12,16 +12,35 @@ To compile and run the demonstration program, follow these steps:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [YOUR_REPO_URL]
+    git clone https://github.com/Rishabh-Singh-01/ralloc.git
     cd ralloc
     ```
 
 2.  **Run the Demo:**
-    The provided `Makefile` is configured to compile and execute the recommended demonstration file.
+    The provided `Makefile` is configured to compile and execute the recommended demonstration file. Requires gcc.
     ```bash
     make run
     ```
 
+3.  **Run the tests:**
+    The provided `Makefile` is configured to compile and execute the recommended tests. Requires gcc.
+    ```bash
+    make test
+    ```
+
+4.  **Allocate Memory in your Code:**
+    Once setup, use the below provided function to allocate memory.
+
+    ```c
+    void *ralloc(size_t size);
+    ```
+
+5.  **De-Allocate Memory in your Code:**
+    Once setup and allocated memory, use the below provided function to de-allocate memory.
+
+    ```c
+    void ralloc_free(void *ptr);
+    ```
 ---
 
 ## Codebase Structure
